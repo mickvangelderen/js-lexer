@@ -2,59 +2,107 @@ var expect = require('chai').expect;
 
 var Lexer = require('../lib/lexer');
 
-var tokens = [{
+var rules = [{
 	regex: /\s+/gm,
-	evaluate: function() { return null; }
 }, {
 	regex: /(\d*\.\d+)/g,
-	evaluate: function(match) { return { type: 'real', value: +match[1] }; }
+	type: 'real',
+	value: function(match) { return +match[1]; }
 }, {
 	regex: /(\d+)/g,
-	evaluate: function(match) { return { type: 'integer', value: +match[1] }; }
+	type: 'integer',
+	value: function(match) { return +match[1]; }
 }];
 
 describe('lib/lexer', function() {
 
 	it('should return an integer', function(done) {
-		var l = new Lexer(tokens);
+		var l = new Lexer(rules);
 		l.on('data', function(data) {
 			expect(data).to.deep.equal({
-				type: 'integer',
-				value: 312
+				line: 1, column: 1, type: 'integer', value: 312
 			});
-			done()
+			done();
 		});
 		l.write('312');
 		l.end();
 	});
 
 	it('should return a real', function(done) {
-		var l = new Lexer(tokens);
+		var l = new Lexer(rules);
 		l.on('data', function(data) {
 			expect(data).to.deep.equal({
-				type: 'real',
-				value: 3.14
+				line: 1, column: 1, type: 'real', value: 3.14
 			});
-			done()
+			done();
 		});
 		l.write('3.14');
 		l.end();
 	});
 
 	it('should concat buffers if a regex matches until the end', function(done) {
-		var l = new Lexer(tokens);
+		var l = new Lexer(rules);
 		l.on('data', function(data) {
 			expect(data).to.deep.equal({
-				type: 'real',
-				value: 3.1415
+				line: 1, column: 1, type: 'real', value: 3.1415
 			});
-			done()
+			done();
 		});
 		l.write('3.14');
 		l.write('15');
 		l.end();
 	});
 
+	it('should mess up if the maximum match length is too small', function(done) {
+		var l = new Lexer(rules, {
+			maximumMatchLength: 4
+		});
+		var results = [{
+			line: 1, column: 1, type: 'real', value: 3.14
+		}, {
+			line: 1, column: 5, type: 'integer', value: 15
+		}];
+		l.on('data', function(data) {
+			expect(data).to.deep.equal(results.shift());
+			if (results.length === 0) done();
+		});
+		l.write('3.14');
+		l.write('15');
+		l.end();
+	});
+
+	it('should not mess up if the maximum match length is large enough', function(done) {
+		var l = new Lexer(rules, {
+			maximumMatchLength: 5
+		});
+		l.on('data', function(data) {
+			expect(data).to.deep.equal({
+				line: 1, column: 1, type: 'real', value: 3.1415
+			});
+			done();
+		});
+		l.write('3.14');
+		l.write('15');
+		l.end();
+	});
+
+	it('should detect newlines even if they are matched', function(done) {
+		var l = new Lexer(rules);
+		var results = [{
+			line: 1, column: 1, type: 'real', value: 3.14
+		}, {
+			line: 2, column: 1, type: 'integer', value: 15
+		}, {
+			line: 3, column: 2, type: 'integer', value: 3
+		}];
+		l.on('data', function(data) {
+			expect(data).to.deep.equal(results.shift());
+			if (results.length === 0) done();
+		});
+		l.write('3.14\r');
+		l.write('\n15\r 3');
+		l.end();
+	});
 });
 
 
