@@ -6,12 +6,10 @@ var rules = [{
 	regex: /\s+/gm,
 }, {
 	regex: /(\d*\.\d+)/g,
-	type: 'real',
-	value: function(match) { return +match[1]; }
+	evaluate: function(match) { return { index: match.index, type: 'real', value: +match[1] }; }
 }, {
 	regex: /(\d+)/g,
-	type: 'integer',
-	value: function(match) { return +match[1]; }
+	evaluate: function(match) { return { index: match.index, type: 'integer', value: +match[1] }; }
 }];
 
 describe('lib/lexer', function() {
@@ -20,7 +18,7 @@ describe('lib/lexer', function() {
 		var l = new Lexer(rules);
 		l.on('data', function(data) {
 			expect(data).to.deep.equal({
-				line: 1, column: 1, type: 'integer', value: 312
+				index: 0, type: 'integer', value: 312
 			});
 			done();
 		});
@@ -32,7 +30,7 @@ describe('lib/lexer', function() {
 		var l = new Lexer(rules);
 		l.on('data', function(data) {
 			expect(data).to.deep.equal({
-				line: 1, column: 1, type: 'real', value: 3.14
+				index: 0, type: 'real', value: 3.14
 			});
 			done();
 		});
@@ -44,7 +42,7 @@ describe('lib/lexer', function() {
 		var l = new Lexer(rules);
 		l.on('data', function(data) {
 			expect(data).to.deep.equal({
-				line: 1, column: 1, type: 'real', value: 3.1415
+				index: 0, type: 'real', value: 3.1415
 			});
 			done();
 		});
@@ -58,9 +56,9 @@ describe('lib/lexer', function() {
 			maximumMatchLength: 4
 		});
 		var results = [{
-			line: 1, column: 1, type: 'real', value: 3.14
+			index: 0, type: 'real', value: 3.14
 		}, {
-			line: 1, column: 5, type: 'integer', value: 15
+			index: 4, type: 'integer', value: 15
 		}];
 		l.on('data', function(data) {
 			expect(data).to.deep.equal(results.shift());
@@ -77,7 +75,7 @@ describe('lib/lexer', function() {
 		});
 		l.on('data', function(data) {
 			expect(data).to.deep.equal({
-				line: 1, column: 1, type: 'real', value: 3.1415
+				index: 0, type: 'real', value: 3.1415
 			});
 			done();
 		});
@@ -89,11 +87,11 @@ describe('lib/lexer', function() {
 	it('should detect newlines even if they are matched', function(done) {
 		var l = new Lexer(rules);
 		var results = [{
-			line: 1, column: 1, type: 'real', value: 3.14
+			index: 0, type: 'real', value: 3.14
 		}, {
-			line: 2, column: 1, type: 'integer', value: 15
+			index: 6, type: 'integer', value: 15
 		}, {
-			line: 3, column: 2, type: 'integer', value: 3
+			index: 10, type: 'integer', value: 3
 		}];
 		l.on('data', function(data) {
 			expect(data).to.deep.equal(results.shift());
