@@ -1,5 +1,5 @@
-var Lexer = require('../lib/lexer');
 var fs = require('fs');
+var Lexer = require('../lib/lexer');
 
 var lineNumber = 1;
 var lineStart = 0;

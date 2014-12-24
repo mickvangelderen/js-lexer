@@ -1,1 +1,1 @@
-exports.Lexer = require('./lib/lexer');
+module.exports = require('./lib/lexer');

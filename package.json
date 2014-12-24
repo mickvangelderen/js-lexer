@@ -1,7 +1,7 @@
 {
-  "name": "jscg",
+  "name": "js-lexer",
   "version": "0.1.0",
-  "description": "JS Lexer Compiler Experiment",
+  "description": "Streaming regex based lexer written in JavaScript",
   "main": "index.js",
   "scripts": {
     "test": "mocha"
